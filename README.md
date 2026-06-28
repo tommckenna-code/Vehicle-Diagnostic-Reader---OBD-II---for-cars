@@ -1,42 +1,41 @@
-# Vehicle-Diagnostic-Reader---OBD-II---for-cars
-On Board Diagnostics 2 are the automotive diagnostics tool and this project will be designed around it as an open source interface paired with ELM327 adapters, Python and Visual Basic.NET. This will demonstrate cross platform capability in reading real time vehicle telemetry, decoding diagnostic troubleshooting codes and displaying/reading live engine metrics.
+# Vehicle Diagnostic Reader — OBD-II for Cars
 
-Built as a personal project to explore embeedded systems, vehical telemetry and hte intersection of software engineering with the automotive industry.
+Python tool for interfacing with a vehicle's OBD-II (on board diagnostics) port via ELM327 
+adapter, implementing the ISO 15765-4 CAN transport protocol.
 
-## How it works
+## What it does
+- Reads live engine PIDs (RPM, coolant temp, throttle position, vehicle speed)
+- Retrieves and decodes Diagnostic Trouble Codes (DTCs) per SAE J1979
+- Logs session data to CSV for offline analysis
+- [In development] Enumerates exposed UDS (ISO 14229) services as a 
+  security baseline
 
-The tool connects to an ELM327 Bluetooth OBD-II adapter plugged into
-any car manufactured from 2001 (petrol) / 2004 (diesel) onwards in
-the UK/EU. It queries the vehicle's ECU for live data and diagnostic
-trouble codes (DTCs).
+## Hardware
+- ELM327 USB adapter (FTDI chip)
+- Tested on: [VolksWagen golf TDI/diesel/2018]
+- OBD-II connector: ISO 15765-4 (CAN 11-bit, 500kbps)
 
-## Features
+## Protocols
+- SAE J1979 — OBD-II diagnostic services (Mode 01, 03, 07)
+- ISO 15765-4 — CAN-based OBD-II transport layer
+- ELM327 AT command set for adapter communication
 
-- Live engine data: RPM, speed, coolant temperature, throttle position
-- Stored fault code (DTC) reading
-- Demo mode for testing without hardware
+## Why this matters for automotive security
+The OBD-II port is an unauthenticated diagnostic interface present on 
+all post-2001 vehicles. Mapping what services are exposed is foundational 
+to ECU security assessment and Threat Analysis and Risk Assessment (TARA) 
+under ISO 21434.
 
-## How to run
-
-```
+## Setup
 pip install obd
-python obd_reader.py
-```
+python diagnostic_reader.py
 
-Set `DEMO_MODE = True` to test without a vehicle connected, or
-`False` once your ELM327 adapter is paired and the vehicle is running.
-
-## Hardware required
-
-- ELM327 Bluetooth OBD-II adapter (~£10)
-- Any OBD-II compliant vehicle
-
-## Tech used
-
-- Python 3
-- python-obd library
-
+## Planned extensions once standard functions are working
+- UDS service enumeration (ISO 14229)
+- CAN frame capture and logging mode
+- DTC lookup against known vulnerability patterns
+  
 ## NOTE
-This is an active learning project, not an advertised diagnostics tool. Always follow manufacturer/manual guidance and never use diagnostic tools in a way that could distract safe driving, but feel free to use thanks.
+This is an active learning project, not an advertised diagnostics tool. Always follow manufacturer/manual guidance and never use diagnostic tools in a way that interferes safe driving, but feel free to use or expand thanks.
 
 
