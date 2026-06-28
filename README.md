@@ -28,6 +28,7 @@ under ISO 21434.
 
 ## Setup
 pip install obd
+
 python diagnostic_reader.py
 
 ## Planned extensions once standard functions are working
