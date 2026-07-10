@@ -1,5 +1,17 @@
 Vehicle Diagnostic Reader
 
+vehicle-diagnostic-reader overview/
+│
+│   ├── obd_serial.py          # raw AT command handshake
+│   ├── pid_decoder.py         # manual hex decoding (RPM/speed/temp/throttle)
+│   ├── reader.py              # CLI test
+│   ├── app.py                 # Flask + background polling thread
+│   │    
+│   ├── template/
+│       └── index.html     # dashboard
+│
+└── README.md                # Project documentation
+
 Requirements ; Flask, Pyserial.
 
 Overview
