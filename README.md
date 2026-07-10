@@ -1,12 +1,17 @@
 # Vehicle Diagnostic Reader — OBD-II for Cars
 
+
 vehicle-diagnostic-reader/
-├── obd_serial.py       # raw AT command handshake
-├── pid_decoder.py       # manual hex decoding (RPM/speed/temp/throttle)
-├── reader.py            # CLI test
-├── app.py                # Flask + background polling thread
-├── templates/index.html  # dashboard
-└── README.md
+│
+│   ├── obd_serial.py          # raw AT command handshake
+│   ├── pid_decoder.py         # manual hex decoding (RPM/speed/temp/throttle)
+│   ├── reader.py              # CLI test
+│   ├── app.py                 # Flask + background polling thread
+│   │    
+│   ├── template/
+│       └── index.html     # dashboard
+│
+└── README.md                # Project documentation
 
 Python tool for interfacing with a vehicle's OBD-II (on board diagnostics) port via ELM327 
 adapter, implementing the ISO 15765-4 CAN transport protocol.
