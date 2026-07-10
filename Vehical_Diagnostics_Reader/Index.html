@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title> Vehical Diagnostic Reader </title>
+        <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;700&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+        <style>
+  :root {
+    --bg: #0c0e11;
+    --panel: #15181c;
+    --bezel: #22262b;
+    --amber: #ff7a1a;
+    --amber-dim: #6b3a12;
+    --text: #e9e6df;
+    --muted: #6b7178;
+    --ok: #3ddc84;
+    --danger: #ff3b3b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Oswald', sans-serif;
+    min-height: 100vh;
+    padding: 32px 24px;
+  }
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    max-width: 960px;
+    margin: 0 auto 28px auto;
+    border-bottom: 1px solid var(--bezel);
+    padding-bottom: 16px;
+  }
+  .header h1 {
+    font-size: 20px;
+    font-weight: 500;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--text);
+  }
+  .status {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+  }
+  .dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--danger);
+    transition: background 0.3s;
+  }
+  .dot.connected { background: var(--ok); box-shadow: 0 0 8px var(--ok); }
+ 
+  .grid {
+    max-width: 960px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  @media (max-width: 640px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+ 
+  .gauge-card {
+    background: var(--panel);
+    border: 1px solid var(--bezel);
+    border-radius: 6px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .gauge-card::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--amber-dim);
+  }
+  .gauge-label {
+    font-size: 12px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .gauge-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 48px;
+    font-weight: 700;
+    color: var(--amber);
+    line-height: 1;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+  }
+  .gauge-value .unit {
+    font-size: 16px;
+    font-weight: 400;
+    color: var(--muted);
+  }
+  .bar-track {
+    margin-top: 16px;
+    height: 6px;
+    background: var(--bezel);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .bar-fill {
+    height: 100%;
+    background: var(--amber);
+    width: 0%;
+    transition: width 0.4s ease;
+  }
+  .bar-fill.redline { background: var(--danger); }
+ 
+  .footer-note {
+    max-width: 960px;
+    margin: 28px auto 0 auto;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+</style>
+    </head>
+    <body>
+ 
+  <div class="header">
+    <h1>Vehicle Diagnostic Reader</h1>
+    <div class="status">
+      <span class="dot" id="status-dot"></span>
+      <span id="status-text">CONNECTING</span>
+    </div>
+  </div>
+ 
+  <div class="grid">
+    <div class="gauge-card">
+      <div class="gauge-label">Engine RPM</div>
+      <div class="gauge-value"><span id="rpm-val">--</span><span class="unit">rpm</span></div>
+      <div class="bar-track"><div class="bar-fill" id="rpm-bar"></div></div>
+    </div>
+ 
+    <div class="gauge-card">
+      <div class="gauge-label">Road Speed</div>
+      <div class="gauge-value"><span id="speed-val">--</span><span class="unit">km/h</span></div>
+      <div class="bar-track"><div class="bar-fill" id="speed-bar"></div></div>
+    </div>
+ 
+    <div class="gauge-card">
+      <div class="gauge-label">Coolant Temp</div>
+      <div class="gauge-value"><span id="coolant-val">--</span><span class="unit">&deg;C</span></div>
+      <div class="bar-track"><div class="bar-fill" id="coolant-bar"></div></div>
+    </div>
+ 
+    <div class="gauge-card">
+      <div class="gauge-label">Throttle Position</div>
+      <div class="gauge-value"><span id="throttle-val">--</span><span class="unit">%</span></div>
+      <div class="bar-track"><div class="bar-fill" id="throttle-bar"></div></div>
+    </div>
+  </div>
+ 
+  <div class="footer-note">POLLING /api/data @ 1Hz — PIC18F25K80 / FT232RL over ELM327</div>
+ 
+<script>
+async function poll() {
+  try {
+    const res = await fetch('/api/data');
+    const data = await res.json();
+ 
+    const dot = document.getElementById('status-dot');
+    const statusText = document.getElementById('status-text');
+    if (data.connected) {
+      dot.classList.add('connected');
+      statusText.textContent = 'LIVE';
+    } else {
+      dot.classList.remove('connected');
+      statusText.textContent = 'NO SIGNAL';
+    }
+ 
+    setVal('rpm', data.rpm, 8000);
+    setVal('speed', data.speed, 200);
+    setVal('coolant', data.coolant_temp, 120);
+    setVal('throttle', data.throttle, 100);
+ 
+    const rpmBar = document.getElementById('rpm-bar');
+    if (data.rpm && data.rpm > 6500) rpmBar.classList.add('redline');
+    else rpmBar.classList.remove('redline');
+ 
+  } catch (e) {
+    document.getElementById('status-text').textContent = 'ERROR';
+  }
+}
+ 
+function setVal(key, value, max) {
+  const valEl = document.getElementById(key + '-val');
+  const barEl = document.getElementById(key + '-bar');
+  valEl.textContent = (value === null || value === undefined) ? '--' : value;
+  if (typeof value === 'number') {
+    barEl.style.width = Math.min(100, (value / max) * 100) + '%';
+  }
+}
+ 
+setInterval(poll, 1000);
+poll();
+</script>
+ 
+</body>
+</html>

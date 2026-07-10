@@ -1,0 +1,69 @@
+Vehicle Diagnostic Reader
+
+Requirements ; Flask, Pyserial.
+
+Overview
+
+Python/OBD-II diagnostic tool built on a genuine ELM327 interface
+(PIC18F25K80 + FTDI FT232RL). Talks to the ECU over the standard
+OBD-II AT command protocol, decodes PIDs manually at the byte level
+(no reliance on a black-box decoding library), and displays live
+data via a CLI or Flask dashboard.
+
+Why manual PID decoding
+
+Libraries like python-obd handle decoding for you, but doing it by
+hand demonstrates actual understanding of the ELM327 command set and
+the OBD-II response format — relevant background for UDS (ISO 14229)
+work and automotive cybersecurity roles, where you need to reason
+about the protocol at the byte level, not just call a function.
+
+Structure
+
+
+- obd_serial.py — raw serial layer, handles the AT command handshake
+
+- pid_decoder.py — manual hex-to-value decoding for RPM, speed, coolant temp, throttle
+
+- reader.py — CLI: connect and print live values in a loop
+
+- app.py — Flask dashboard: background polling thread + /api/data endpoint
+
+- templates/index.html — instrument-cluster style live dashboard
+
+
+Setup
+
+bash
+pip install -r requirements.txt
+
+Plug in the ELM327, find your port:
+
+bash
+ls /dev/tty.usbserial*
+
+Update the PORT variable at the top of reader.py or app.py to match.
+
+Usage
+
+CLI:
+
+bash
+python reader.py
+
+Dashboard:
+
+bash
+python app.py
+
+Then open http://localhost:5000 in your browser.
+
+Ignition must be ON (engine doesn't need to be running) for the ECU to respond.
+
+Next steps
+
+- Add more PIDs (fuel trim, MAF, O2 sensor readings)
+
+- Move from OBD-II PIDs to raw CAN bus sniffing (needs a CAN interface like MCP2515 + Arduino, or a USB2CAN adapter) — closer to real UDS/security work
+
+- Log sessions to CSV/SQLite for trip history
