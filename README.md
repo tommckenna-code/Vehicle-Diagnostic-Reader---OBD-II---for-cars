@@ -1,43 +1,51 @@
-# Vehicle Diagnostic Reader — OBD-II for Cars
+# Vehicle Diagnostic Reader
 
+Python OBD-II tool using an ELM327 USB adapter. It reads live engine data and stored fault codes from a car's ECU, decoding the raw hex by hand instead of using a library.
 
-Python tool for interfacing with a vehicle's OBD-II (on board diagnostics) port via ELM327 
-adapter, implementing the ISO 15765-4 CAN transport protocol.
+## What you need
 
-## What it does
-- Reads live engine PIDs (RPM, coolant temp, throttle position, vehicle speed)
-- Retrieves and decodes Diagnostic Trouble Codes (DTCs) per SAE J1979
-- Logs session data to CSV for offline analysis
-- [In development] Enumerates exposed UDS (ISO 14229) services as a 
-  security baseline
+- An ELM327 !USB! adapter (Bluetooth versions won't work with this code)
+- A petrol car from 2001+ or diesel from 2004+ (EU). The OBD port is usually under the dashboard by the driver's knees
+- Python 3 on a Mac or Linux machine
 
-## Hardware
-- ELM327 USB adapter (FTDI chip)
-- Tested on: [VolksWagen golf TDI/diesel/2018]
-- OBD-II connector: ISO 15765-4 (CAN 11-bit, 500kbps)
+## First run
 
-## Protocols
-- SAE J1979 — OBD-II diagnostic services (Mode 01, 03, 07)
-- ISO 15765-4 — CAN-based OBD-II transport layer
-- ELM327 AT command set for adapter communication
+1. Plug the adapter into the car's OBD port and your laptop's USB port
+2. Turn the ignition on (engine can stay off)
+3. Run `ls /dev/tty.usbserial*` and copy what it prints, e.g. `/dev/tty.usbserial-ABBC2GWD`
+4. Paste that into the `PORT = "..."` line near the top of `reader.py` and `app.py`
+5. Run `python3 reader.py`. You should see the fault codes, then live values updating every second
 
-## Why this matters for automotive security
-The OBD-II port is an unauthenticated diagnostic interface present on 
-all post-2001 vehicles. Mapping what services are exposed is foundational 
-to ECU security assessment and Threat Analysis and Risk Assessment (TARA) 
-under ISO 21434.
+## Features
 
-## Setup
-pip install obd
+- Live RPM, speed, coolant temp and throttle position
+- Reads and decodes stored fault codes (e.g. `P0133`) and check engine light status
+- Works on CAN and older K-line cars
+- Terminal reader or live browser dashboard (Flask)
 
-python diagnostic_reader.py
+## How it works
 
-## Planned extensions once standard functions are working
-- UDS service enumeration (ISO 14229)
-- CAN frame capture and logging mode
-- DTC lookup against known vulnerability patterns
-  
-## NOTE
-This is an active learning project, not an advertised diagnostics tool. Always follow manufacturer/manual guidance and never use diagnostic tools in a way that interferes safe driving, but feel free to use or expand thanks.
+`obd_serial.py` sends commands to the ELM327 over USB serial. `pid_decoder.py` turns the hex replies into real values:
 
+- Replies echo the request + `0x40` (`01` → `41`), the same rule UDS (ISO 14229) uses
+- RPM = `((A × 256) + B) / 4`, coolant = `A − 40`
+- Fault codes are packed into 2 bytes: letter (P/C/B/U), digit, then 3 hex digits
 
+**Bug fixed:** waiting a fixed 0.3 s per reply worked on CAN but broke on slower K-line cars, so it now reads until the ELM327's `>` prompt.
+
+## Run it
+
+```bash
+pip3 install -r requirements.txt
+ls /dev/tty.usbserial*        # find your port, set PORT in reader.py / app.py
+python3 pid_decoder.py        # tests, no car needed
+python3 reader.py             # terminal
+python3 app.py                # dashboard at localhost:5000
+```
+
+Ignition on; the engine doesn't need to be running.
+
+## Next steps
+
+- Raw CAN bus capture (CANable 2.0) to reverse-engineer non-standard signals
+- More PIDs and CSV logging
